@@ -1,0 +1,377 @@
+---
+// Portfolio Landing Page
+---
+
+<html lang="es">
+	<head>
+		<meta charset="utf-8" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<meta name="viewport" content="width=device-width" />
+		<meta name="generator" content={Astro.generator} />
+		<meta name="description" content="Portfolio personal de [Tu Nombre]" />
+		<title>Revilla - Portfolio Personal</title>
+	</head>
+	<body>
+		<header class="header">
+			<nav class="nav">
+				<h1 class="logo">Revilla</h1>
+				<ul class="nav-links">
+					<li><a href="#about">Sobre mí</a></li>
+					<li><a href="#projects">Proyectos</a></li>
+					<li><a href="#contact">Contacto</a></li>
+				</ul>
+			</nav>
+		</header>
+
+		<main>
+			<section class="hero">
+				<h2 class="hero-title">Hola, soy <span class="highlight">Revilla</span></h2>
+				<p class="hero-subtitle">Desarrollador Full Stack & Creative Technologist</p>
+				<p class="hero-description">
+					Construyo experiencias digitales modernas y funcionales
+				</p>
+				<a href="#contact" class="cta-button">Contáctame</a>
+			</section>
+
+			<section id="about" class="section">
+				<div class="container">
+					<h2 class="section-title">Sobre mí</h2>
+					<p class="section-text">
+						Soy un desarrollador apasionado por crear soluciones web elegantes y eficientes.
+						Me especializo en tecnologías modernas y siempre estoy aprendiendo algo nuevo.
+					</p>
+					<div class="skills">
+						<span class="skill-tag">JavaScript</span>
+						<span class="skill-tag">TypeScript</span>
+						<span class="skill-tag">React</span>
+						<span class="skill-tag">Astro</span>
+						<span class="skill-tag">Node.js</span>
+						<span class="skill-tag">CSS/SCSS</span>
+					</div>
+				</div>
+			</section>
+
+			<section id="projects" class="section section-alt">
+				<div class="container">
+					<h2 class="section-title">Proyectos Destacados</h2>
+					<div class="projects-grid">
+						<article class="project-card">
+							<h3 class="project-title">Proyecto 1</h3>
+							<p class="project-description">
+								Descripción breve del proyecto y las tecnologías utilizadas.
+							</p>
+							<div class="project-tags">
+								<span class="tag">React</span>
+								<span class="tag">TypeScript</span>
+							</div>
+						</article>
+
+						<article class="project-card">
+							<h3 class="project-title">Proyecto 2</h3>
+							<p class="project-description">
+								Descripción breve del proyecto y las tecnologías utilizadas.
+							</p>
+							<div class="project-tags">
+								<span class="tag">Astro</span>
+								<span class="tag">Node.js</span>
+							</div>
+						</article>
+
+						<article class="project-card">
+							<h3 class="project-title">Proyecto 3</h3>
+							<p class="project-description">
+								Descripción breve del proyecto y las tecnologías utilizadas.
+							</p>
+							<div class="project-tags">
+								<span class="tag">Vue</span>
+								<span class="tag">CSS</span>
+							</div>
+						</article>
+					</div>
+				</div>
+			</section>
+
+			<section id="contact" class="section">
+				<div class="container">
+					<h2 class="section-title">Contacto</h2>
+					<p class="section-text">
+						¿Tienes un proyecto en mente? Me encantaría saber de ti.
+					</p>
+					<div class="contact-links">
+						<a href="mailto:tu@email.com" class="contact-link">Email</a>
+						<a href="https://github.com/tuusuario" class="contact-link" target="_blank" rel="noopener">GitHub</a>
+						<a href="https://linkedin.com/in/tuusuario" class="contact-link" target="_blank" rel="noopener">LinkedIn</a>
+						<a href="https://twitter.com/tuusuario" class="contact-link" target="_blank" rel="noopener">Twitter</a>
+					</div>
+				</div>
+			</section>
+		</main>
+
+		<footer class="footer">
+			<p>&copy; 2024 Revilla. Todos los derechos reservados.</p>
+		</footer>
+
+		<style>
+			:root {
+				--color-primary: #6366f1;
+				--color-primary-dark: #4f46e5;
+				--color-bg: #0f172a;
+				--color-bg-alt: #1e293b;
+				--color-text: #e2e8f0;
+				--color-text-muted: #94a3b8;
+				--color-border: #334155;
+				--spacing-xs: 0.5rem;
+				--spacing-sm: 1rem;
+				--spacing-md: 2rem;
+				--spacing-lg: 4rem;
+				--spacing-xl: 6rem;
+			}
+
+			* {
+				margin: 0;
+				padding: 0;
+				box-sizing: border-box;
+			}
+
+			body {
+				font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+					'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+					sans-serif;
+				background-color: var(--color-bg);
+				color: var(--color-text);
+				line-height: 1.6;
+			}
+
+			.header {
+				position: fixed;
+				top: 0;
+				left: 0;
+				right: 0;
+				background-color: rgba(15, 23, 42, 0.8);
+				backdrop-filter: blur(10px);
+				border-bottom: 1px solid var(--color-border);
+				z-index: 1000;
+			}
+
+			.nav {
+				max-width: 1200px;
+				margin: 0 auto;
+				padding: var(--spacing-sm) var(--spacing-md);
+				display: flex;
+				justify-content: space-between;
+				align-items: center;
+			}
+
+			.logo {
+				font-size: 1.5rem;
+				font-weight: 700;
+				color: var(--color-primary);
+			}
+
+			.nav-links {
+				display: flex;
+				gap: var(--spacing-md);
+				list-style: none;
+			}
+
+			.nav-links a {
+				color: var(--color-text);
+				text-decoration: none;
+				transition: color 0.3s ease;
+			}
+
+			.nav-links a:hover {
+				color: var(--color-primary);
+			}
+
+			.hero {
+				min-height: 100vh;
+				display: flex;
+				flex-direction: column;
+				justify-content: center;
+				align-items: center;
+				text-align: center;
+				padding: var(--spacing-lg) var(--spacing-md);
+			}
+
+			.hero-title {
+				font-size: clamp(2.5rem, 8vw, 4rem);
+				font-weight: 700;
+				margin-bottom: var(--spacing-sm);
+			}
+
+			.highlight {
+				color: var(--color-primary);
+			}
+
+			.hero-subtitle {
+				font-size: clamp(1.25rem, 3vw, 1.75rem);
+				color: var(--color-text-muted);
+				margin-bottom: var(--spacing-sm);
+			}
+
+			.hero-description {
+				font-size: 1.125rem;
+				color: var(--color-text-muted);
+				max-width: 600px;
+				margin-bottom: var(--spacing-md);
+			}
+
+			.cta-button {
+				display: inline-block;
+				padding: 0.875rem 2rem;
+				background-color: var(--color-primary);
+				color: white;
+				text-decoration: none;
+				border-radius: 0.5rem;
+				font-weight: 600;
+				transition: background-color 0.3s ease, transform 0.2s ease;
+			}
+
+			.cta-button:hover {
+				background-color: var(--color-primary-dark);
+				transform: translateY(-2px);
+			}
+
+			.section {
+				padding: var(--spacing-xl) var(--spacing-md);
+			}
+
+			.section-alt {
+				background-color: var(--color-bg-alt);
+			}
+
+			.container {
+				max-width: 1200px;
+				margin: 0 auto;
+			}
+
+			.section-title {
+				font-size: clamp(2rem, 5vw, 3rem);
+				font-weight: 700;
+				margin-bottom: var(--spacing-md);
+				text-align: center;
+			}
+
+			.section-text {
+				font-size: 1.125rem;
+				color: var(--color-text-muted);
+				max-width: 700px;
+				margin: 0 auto var(--spacing-md);
+				text-align: center;
+			}
+
+			.skills {
+				display: flex;
+				flex-wrap: wrap;
+				gap: var(--spacing-sm);
+				justify-content: center;
+				margin-top: var(--spacing-md);
+			}
+
+			.skill-tag {
+				padding: 0.5rem 1rem;
+				background-color: var(--color-bg-alt);
+				border: 1px solid var(--color-border);
+				border-radius: 0.375rem;
+				font-size: 0.875rem;
+				color: var(--color-primary);
+				font-weight: 500;
+			}
+
+			.projects-grid {
+				display: grid;
+				grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+				gap: var(--spacing-md);
+				margin-top: var(--spacing-md);
+			}
+
+			.project-card {
+				padding: var(--spacing-md);
+				background-color: var(--color-bg);
+				border: 1px solid var(--color-border);
+				border-radius: 0.75rem;
+				transition: transform 0.3s ease, border-color 0.3s ease;
+			}
+
+			.project-card:hover {
+				transform: translateY(-4px);
+				border-color: var(--color-primary);
+			}
+
+			.project-title {
+				font-size: 1.5rem;
+				margin-bottom: var(--spacing-sm);
+				color: var(--color-primary);
+			}
+
+			.project-description {
+				color: var(--color-text-muted);
+				margin-bottom: var(--spacing-sm);
+			}
+
+			.project-tags {
+				display: flex;
+				gap: var(--spacing-xs);
+				flex-wrap: wrap;
+			}
+
+			.tag {
+				padding: 0.25rem 0.75rem;
+				background-color: rgba(99, 102, 241, 0.1);
+				border: 1px solid var(--color-primary);
+				border-radius: 0.25rem;
+				font-size: 0.75rem;
+				color: var(--color-primary);
+			}
+
+			.contact-links {
+				display: flex;
+				gap: var(--spacing-md);
+				justify-content: center;
+				margin-top: var(--spacing-md);
+				flex-wrap: wrap;
+			}
+
+			.contact-link {
+				padding: 0.75rem 1.5rem;
+				border: 2px solid var(--color-primary);
+				color: var(--color-primary);
+				text-decoration: none;
+				border-radius: 0.5rem;
+				font-weight: 600;
+				transition: background-color 0.3s ease, color 0.3s ease;
+			}
+
+			.contact-link:hover {
+				background-color: var(--color-primary);
+				color: white;
+			}
+
+			.footer {
+				padding: var(--spacing-md);
+				text-align: center;
+				color: var(--color-text-muted);
+				border-top: 1px solid var(--color-border);
+			}
+
+			@media (max-width: 768px) {
+				.nav-links {
+					gap: var(--spacing-sm);
+				}
+
+				.nav {
+					padding: var(--spacing-sm);
+				}
+
+				.section {
+					padding: var(--spacing-lg) var(--spacing-sm);
+				}
+
+				.projects-grid {
+					grid-template-columns: 1fr;
+				}
+			}
+		</style>
+	</body>
+</html>
