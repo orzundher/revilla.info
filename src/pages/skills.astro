@@ -1,0 +1,54 @@
+---
+import Layout from '../layouts/Layout.astro';
+
+const skills = [
+	'JavaScript',
+	'TypeScript',
+	'React',
+	'Astro',
+	'Node.js',
+	'CSS / SCSS',
+];
+---
+
+<Layout title="Skills — Revilla">
+	<section class="page">
+		<div class="container">
+			<h1 class="page-title">Skills</h1>
+			<ul class="skills-list">
+				{skills.map((skill) => (
+					<li class="skill-item">{skill}</li>
+				))}
+			</ul>
+		</div>
+	</section>
+</Layout>
+
+<style>
+	.page {
+		padding: 4rem 2.5rem;
+	}
+
+	.container {
+		max-width: 720px;
+	}
+
+	.page-title {
+		font-size: clamp(2rem, 5vw, 3rem);
+		font-weight: 700;
+		letter-spacing: -0.02em;
+		margin-bottom: 2.5rem;
+	}
+
+	.skills-list {
+		list-style: none;
+		border-top: 1px solid #334155;
+	}
+
+	.skill-item {
+		padding: 1.25rem 0;
+		border-bottom: 1px solid #334155;
+		font-size: 1.125rem;
+		color: #e2e8f0;
+	}
+</style>

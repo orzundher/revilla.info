@@ -1,0 +1,153 @@
+---
+interface Props {
+	title?: string;
+	description?: string;
+}
+const { title = 'Revilla', description = 'Revilla — Portfolio Personal' } = Astro.props;
+const currentPath = Astro.url.pathname;
+---
+
+<html lang="es">
+	<head>
+		<meta charset="utf-8" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<meta name="generator" content={Astro.generator} />
+		<meta name="description" content={description} />
+		<title>{title}</title>
+	</head>
+	<body>
+		<header class="header">
+			<nav class="nav">
+				<a href="/" class="logo">Revilla</a>
+				<ul class="nav-links">
+					<li><a href="/info" class:list={[{ active: currentPath === '/info' }]}>Info</a></li>
+					<li><a href="/skills" class:list={[{ active: currentPath === '/skills' }]}>Skills</a></li>
+					<li><a href="/works" class:list={[{ active: currentPath === '/works' }]}>Works</a></li>
+					<li><a href="/articles" class:list={[{ active: currentPath === '/articles' }]}>Artículos</a></li>
+					<li><a href="/contact" class:list={[{ active: currentPath === '/contact' }]}>Contacto</a></li>
+				</ul>
+			</nav>
+		</header>
+
+		<main class="page-content">
+			<slot />
+		</main>
+
+		<footer class="footer">
+			<p>&copy; 2025 Revilla.</p>
+		</footer>
+	</body>
+</html>
+
+<style>
+	:root {
+		--color-primary: #6366f1;
+		--color-bg: #0f172a;
+		--color-bg-alt: #1e293b;
+		--color-text: #e2e8f0;
+		--color-text-muted: #94a3b8;
+		--color-border: #334155;
+		--spacing-xs: 0.5rem;
+		--spacing-sm: 1rem;
+		--spacing-md: 2rem;
+		--spacing-lg: 4rem;
+		--spacing-xl: 6rem;
+	}
+
+	* {
+		margin: 0;
+		padding: 0;
+		box-sizing: border-box;
+	}
+
+	html {
+		scroll-behavior: smooth;
+	}
+
+	body {
+		font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+			'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+		background-color: var(--color-bg);
+		color: var(--color-text);
+		line-height: 1.6;
+		min-height: 100vh;
+		display: flex;
+		flex-direction: column;
+	}
+
+	/* ── Nav ── */
+	.header {
+		position: fixed;
+		top: 0;
+		left: 0;
+		right: 0;
+		z-index: 100;
+	}
+
+	.nav {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		padding: 1.5rem 2.5rem;
+	}
+
+	.logo {
+		font-size: 1rem;
+		font-weight: 600;
+		letter-spacing: 0.1em;
+		text-transform: uppercase;
+		color: var(--color-text);
+		text-decoration: none;
+	}
+
+	.nav-links {
+		display: flex;
+		gap: 2rem;
+		list-style: none;
+	}
+
+	.nav-links a {
+		font-size: 0.8rem;
+		font-weight: 500;
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+		color: var(--color-text);
+		text-decoration: none;
+		opacity: 0.5;
+		transition: opacity 0.2s ease;
+	}
+
+	.nav-links a:hover,
+	.nav-links a.active {
+		opacity: 1;
+	}
+
+	/* ── Page content ── */
+	.page-content {
+		flex: 1;
+		padding-top: 6rem;
+	}
+
+	/* ── Footer ── */
+	.footer {
+		padding: 2rem 2.5rem;
+		color: var(--color-text-muted);
+		font-size: 0.8rem;
+		border-top: 1px solid var(--color-border);
+	}
+
+	@media (max-width: 768px) {
+		.nav {
+			padding: 1.25rem 1.5rem;
+		}
+
+		.nav-links {
+			gap: 1.25rem;
+		}
+
+		.nav-links a {
+			font-size: 0.7rem;
+		}
+	}
+</style>

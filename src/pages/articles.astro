@@ -1,0 +1,77 @@
+---
+import Layout from '../layouts/Layout.astro';
+
+const articles = [
+	{ title: 'Métricas', href: '/articles/metrics.pdf' },
+	{ title: 'Costos', href: '/articles/costos.pdf' },
+];
+---
+
+<Layout title="Artículos — Revilla">
+	<section class="page">
+		<div class="container">
+			<h1 class="page-title">Artículos</h1>
+			<ul class="articles-list">
+				{articles.map((article) => (
+					<li>
+						<a href={article.href} class="article-link" target="_blank" rel="noopener">
+							<span class="article-title">{article.title}</span>
+							<span class="article-arrow">→</span>
+						</a>
+					</li>
+				))}
+			</ul>
+		</div>
+	</section>
+</Layout>
+
+<style>
+	.page {
+		padding: 4rem 2.5rem;
+	}
+
+	.container {
+		max-width: 720px;
+	}
+
+	.page-title {
+		font-size: clamp(2rem, 5vw, 3rem);
+		font-weight: 700;
+		letter-spacing: -0.02em;
+		margin-bottom: 2.5rem;
+	}
+
+	.articles-list {
+		list-style: none;
+		border-top: 1px solid #334155;
+	}
+
+	.article-link {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		padding: 1.25rem 0;
+		border-bottom: 1px solid #334155;
+		text-decoration: none;
+		color: #e2e8f0;
+		transition: color 0.2s ease;
+	}
+
+	.article-link:hover {
+		color: #94a3b8;
+	}
+
+	.article-title {
+		font-size: 1rem;
+	}
+
+	.article-arrow {
+		opacity: 0.4;
+		transition: opacity 0.2s ease, transform 0.2s ease;
+	}
+
+	.article-link:hover .article-arrow {
+		opacity: 1;
+		transform: translateX(4px);
+	}
+</style>

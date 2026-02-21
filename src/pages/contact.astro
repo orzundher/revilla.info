@@ -1,0 +1,82 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="Contacto — Revilla">
+	<section class="page">
+		<div class="container">
+			<h1 class="page-title">Contacto</h1>
+			<p class="page-text">¿Tienes un proyecto en mente? Me encantaría saber de ti.</p>
+			<ul class="contact-list">
+				<li>
+					<a href="mailto:tu@email.com" class="contact-link">Email</a>
+				</li>
+				<li>
+					<a href="https://github.com/tuusuario" class="contact-link" target="_blank" rel="noopener">GitHub</a>
+				</li>
+				<li>
+					<a href="https://linkedin.com/in/tuusuario" class="contact-link" target="_blank" rel="noopener">LinkedIn</a>
+				</li>
+				<li>
+					<a href="https://twitter.com/tuusuario" class="contact-link" target="_blank" rel="noopener">Twitter</a>
+				</li>
+			</ul>
+		</div>
+	</section>
+</Layout>
+
+<style>
+	.page {
+		padding: 4rem 2.5rem;
+	}
+
+	.container {
+		max-width: 720px;
+	}
+
+	.page-title {
+		font-size: clamp(2rem, 5vw, 3rem);
+		font-weight: 700;
+		letter-spacing: -0.02em;
+		margin-bottom: 1.5rem;
+	}
+
+	.page-text {
+		font-size: 1.125rem;
+		color: #94a3b8;
+		margin-bottom: 2.5rem;
+	}
+
+	.contact-list {
+		list-style: none;
+		border-top: 1px solid #334155;
+	}
+
+	.contact-link {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		padding: 1.25rem 0;
+		border-bottom: 1px solid #334155;
+		text-decoration: none;
+		font-size: 1rem;
+		color: #e2e8f0;
+		opacity: 0.7;
+		transition: opacity 0.2s ease;
+	}
+
+	.contact-link::after {
+		content: '→';
+		opacity: 0.4;
+		transition: opacity 0.2s ease, transform 0.2s ease;
+	}
+
+	.contact-link:hover {
+		opacity: 1;
+	}
+
+	.contact-link:hover::after {
+		opacity: 1;
+		transform: translateX(4px);
+	}
+</style>

@@ -1,0 +1,109 @@
+---
+import Layout from '../layouts/Layout.astro';
+
+const works = [
+	{
+		title: 'Proyecto 1',
+		description: 'Descripción breve del proyecto y las tecnologías utilizadas.',
+		tags: ['React', 'TypeScript'],
+	},
+	{
+		title: 'Proyecto 2',
+		description: 'Descripción breve del proyecto y las tecnologías utilizadas.',
+		tags: ['Astro', 'Node.js'],
+	},
+	{
+		title: 'Proyecto 3',
+		description: 'Descripción breve del proyecto y las tecnologías utilizadas.',
+		tags: ['Vue', 'CSS'],
+	},
+];
+---
+
+<Layout title="Works — Revilla">
+	<section class="page">
+		<div class="container">
+			<h1 class="page-title">Works</h1>
+			<div class="works-grid">
+				{works.map((work) => (
+					<article class="work-card">
+						<h2 class="work-title">{work.title}</h2>
+						<p class="work-description">{work.description}</p>
+						<div class="work-tags">
+							{work.tags.map((tag) => (
+								<span class="tag">{tag}</span>
+							))}
+						</div>
+					</article>
+				))}
+			</div>
+		</div>
+	</section>
+</Layout>
+
+<style>
+	.page {
+		padding: 4rem 2.5rem;
+	}
+
+	.container {
+		max-width: 1100px;
+	}
+
+	.page-title {
+		font-size: clamp(2rem, 5vw, 3rem);
+		font-weight: 700;
+		letter-spacing: -0.02em;
+		margin-bottom: 2.5rem;
+	}
+
+	.works-grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+		gap: 1.5rem;
+	}
+
+	.work-card {
+		padding: 1.75rem;
+		border: 1px solid #334155;
+		border-radius: 0.5rem;
+		transition: border-color 0.2s ease;
+	}
+
+	.work-card:hover {
+		border-color: #94a3b8;
+	}
+
+	.work-title {
+		font-size: 1.125rem;
+		font-weight: 600;
+		margin-bottom: 0.75rem;
+	}
+
+	.work-description {
+		font-size: 0.9rem;
+		color: #94a3b8;
+		line-height: 1.6;
+		margin-bottom: 1.25rem;
+	}
+
+	.work-tags {
+		display: flex;
+		gap: 0.5rem;
+		flex-wrap: wrap;
+	}
+
+	.tag {
+		padding: 0.2rem 0.6rem;
+		border: 1px solid #334155;
+		border-radius: 0.25rem;
+		font-size: 0.75rem;
+		color: #94a3b8;
+	}
+
+	@media (max-width: 768px) {
+		.works-grid {
+			grid-template-columns: 1fr;
+		}
+	}
+</style>
