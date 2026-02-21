@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(az login:*)",
+      "Bash(az account:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
