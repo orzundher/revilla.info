@@ -2,8 +2,9 @@
 interface Props {
 	title?: string;
 	description?: string;
+	fullscreen?: boolean;
 }
-const { title = 'Revilla', description = 'Revilla — Portfolio Personal' } = Astro.props;
+const { title = 'Revilla', description = 'Revilla — Portfolio Personal', fullscreen = false } = Astro.props;
 const currentPath = Astro.url.pathname;
 ---
 
@@ -25,18 +26,21 @@ const currentPath = Astro.url.pathname;
 					<li><a href="/skills" class:list={[{ active: currentPath === '/skills' }]}>Skills</a></li>
 					<li><a href="/works" class:list={[{ active: currentPath === '/works' }]}>Works</a></li>
 					<li><a href="/articles" class:list={[{ active: currentPath === '/articles' }]}>Artículos</a></li>
+					<li><a href="/map" class:list={[{ active: currentPath === '/map' }]}>Map</a></li>
 					<li><a href="/contact" class:list={[{ active: currentPath === '/contact' }]}>Contacto</a></li>
 				</ul>
 			</nav>
 		</header>
 
-		<main class="page-content">
+		<main class:list={['page-content', { 'page-content--fullscreen': fullscreen }]}>
 			<slot />
 		</main>
 
+		{!fullscreen && (
 		<footer class="footer">
 			<p>&copy; 2025 Revilla.</p>
 		</footer>
+	)}
 	</body>
 </html>
 
@@ -83,6 +87,9 @@ const currentPath = Astro.url.pathname;
 		left: 0;
 		right: 0;
 		z-index: 100;
+		background-color: rgba(217, 119, 6, 0.15);
+		backdrop-filter: blur(12px);
+		-webkit-backdrop-filter: blur(12px);
 	}
 
 	.nav {
@@ -127,6 +134,12 @@ const currentPath = Astro.url.pathname;
 	.page-content {
 		flex: 1;
 		padding-top: 6rem;
+	}
+
+	.page-content--fullscreen {
+		padding-top: 0;
+		flex: 1;
+		position: relative;
 	}
 
 	/* ── Footer ── */

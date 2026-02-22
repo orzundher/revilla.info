@@ -2,7 +2,8 @@
   "permissions": {
     "allow": [
       "Bash(az login:*)",
-      "Bash(az account:*)"
+      "Bash(az account:*)",
+      "Bash(cd /c/Users/orzun/dev/personal/revilla.info && npm run build 2>&1)"
     ],
     "deny": [],
     "ask": []
