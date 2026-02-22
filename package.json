@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "astro": "^5.17.3",
-    "maplibre-gl": "^5.18.0"
+    "maplibre-gl": "^5.18.0",
+    "openseadragon": "^6.0.0"
   }
 }

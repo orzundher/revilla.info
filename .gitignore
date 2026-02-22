@@ -25,3 +25,5 @@ pnpm-debug.log*
 
 # PDF files
 *.pdf
+
+local_assets
