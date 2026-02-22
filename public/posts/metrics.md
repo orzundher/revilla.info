@@ -1,5 +1,4 @@
-
-# Software Engineering für Unternehmen — vor der Ära der Künstlichen Intelligenz
+ # Software Engineering für Unternehmen — vor der Ära der Künstlichen Intelligenz
 
 Welche Praktiken unterscheiden Hochleistungs‑Teams?
 
@@ -42,7 +41,7 @@ Best Practices:
 ---
 
 ## 3. Pipeline‑Automatisierung
-Automatisiere Build, Test und Deployment:
+Automatisiere Build, Test y Deployment:
 - Schnelle automatisierte Tests (CI)
 - Infrastruktur als Code
 - Automatisierte Rollbacks / Rollouts  
@@ -50,45 +49,45 @@ Automation reduziert Varianz und menschliche Fehler.
 
 ---
 
-## 4. Architektur für Team‑Unabhängigkeit
+## 4. Arquitectura para Team‑Unabhängigkeit
 Teams sollen unabhängig deployen können:
-- Modularisierung / Microservices oder klar gekapselte Module
+- Modularización / Microservices oder klar gekapselte Module
 - Stabile, gut dokumentierte APIs
-- Daten und State soweit möglich isolieren  
+- Datos y State möglichst aislados
 Wenn für ein Deployment mehrere Teams koordiniert werden müssen, ist die Architektur nicht optimal.
 
 ---
 
 ## 5. Kultur: Verantwortung & Lernen
-Gute Kultur heißt nicht „keine Fehler“, sondern:
+Gute Cultura bedeutet nicht „keine errores", sino:
 - Blameless Postmortems
-- Fokus auf Ursachen statt Schuld
-- Wissensaustausch und „Shift‑Left“ (Tests & Sicherheit frühzeitig)
+- Fokus en causas y no en culpas
+- Wissensaustausch y "Shift‑Left" (Tests & seguridad temprano)
 Kultur ermöglicht kontinuierliche Verbesserung.
 
 ---
 
 ## 6. Führungsstil, der befähigt
 Effektive Führung:
-- Kontext geben, nicht kontrollieren
+- Context geben, no controlar
 - Hindernisse beseitigen, Bürokratie reduzieren
-- Autonomie und Experimentierfreude fördern
+- Autonomía y experimentación fördern
 
 ---
 
 ## 7. Entscheidungen auf Basis von Daten
-Vermeide subjektive Entscheidungen:
-- Nutze Metriken (Flow, Incidents, Nutzer‑Feedback)
-- Hypothesen testen, messen, anpassen
+Evita decisiones subjetivas:
+- Usa métricas (Flow, Incidents, Nutzer‑Feedback)
+- Hypothesen testen, medir, ajustar
 
 ---
 
 ## Abschluss — Kernbotschaften (1 Minute)
-- Geschwindigkeit und Zuverlässigkeit sind kein Widerspruch.  
-- Fokus auf DORA‑Metriken, Automatisierung, kleine Releases und lernende Kultur.  
-- Ergebnis: schnellere Lieferung, weniger Ausfälle, nachhaltige Skalierbarkeit.
+- Geschwindigkeit y Zuverlässigkeit sind kein Widerspruch.  
+- Fokus en DORA‑Metriken, Automatisierung, pequeñas releases y cultura de aprendizaje.  
+- Resultado: entrega más rápida, menos fallos, escalabilidad sostenible.
 
 ## Vorschlag für nächste Schritte (Meeting‑Action)
 1. Kurz‑Audit: aktuelle Deployment‑Frequenz, Lead Time, MTTR (1 Woche)  
 2. Pilot: 2 Teams → verpflichtende kleine Deploys + Messung (4–8 Wochen)  
-3. Automatisierungs‑Plan für CI/CD und IaC (Priorität: Tests und Rollback) 
+3. Automatisierungs‑Plan für CI/CD y IaC (Priorität: Tests y Rollback)
