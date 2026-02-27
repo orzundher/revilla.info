@@ -19,10 +19,19 @@ import Layout from '../layouts/Layout.astro';
 <script>
 	import OpenSeadragon from 'openseadragon';
 
+	// OpenSeadragon({
+	// 	id: 'osd-viewer',
+	// 	prefixUrl: '',
+	// 	tileSources: '/assets/realny_tiles.dzi',
+	// 	showNavigationControl: false,
+	// 	visibilityRatio: 1,
+	// 	minZoomLevel: 1,
+	// 	defaultZoomLevel: 1,
+	// });
 	OpenSeadragon({
 		id: 'osd-viewer',
 		prefixUrl: '',
-		tileSources: '/assets/realny_tiles.dzi',
+		tileSources: '/assets/realny_tiles_avif.dzi',
 		showNavigationControl: false,
 		visibilityRatio: 1,
 		minZoomLevel: 1,
