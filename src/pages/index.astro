@@ -2,32 +2,54 @@
 import Layout from '../layouts/Layout.astro';
 ---
 
-<Layout fullscreen={true}>
-	<section class="hero">
-		<picture class="hero-picture">
-			<source srcset="/assets/hero2.avif" type="image/avif" />
-			<img src="/assets/hero2.avif" alt="" class="hero-img" fetchpriority="high" decoding="async" />
-		</picture>
-	</section>
+<Layout title="Revilla" fullscreen={true}>
+	<div id="osd-viewer"></div>
 </Layout>
 
 <style>
-	.hero {
-		width: 100vw;
-		height: 100vh;
-		overflow: hidden;
-		position: relative;
-	}
-
-	.hero-picture {
-		position: absolute;
+	#osd-viewer {
+		position: fixed;
 		inset: 0;
-	}
-
-	.hero-img {
 		width: 100%;
 		height: 100%;
-		object-fit: cover;
-		object-position: center;
+		background: #0f172a;
 	}
 </style>
+
+<script>
+	import OpenSeadragon from 'openseadragon';
+
+	// Aspect ratio conocido de la imagen (15360×9600)
+	const IMG_ASPECT = 15360 / 9600; // 1.6
+
+	function getCoverZoom() {
+		const w = window.innerWidth;
+		const h = window.innerHeight;
+		const containerAspect = w / h;
+		// zoom=1 en OSD → imagen llena el ancho.
+		// Para cover: si el container es más alto/cuadrado que la imagen, escalar al alto.
+		return Math.max(1, IMG_ASPECT / containerAspect);
+	}
+
+	const viewer = OpenSeadragon({
+		id: 'osd-viewer',
+		prefixUrl: '',
+		tileSources: '/assets/realny_tiles_avif.dzi',
+		showNavigationControl: false,
+		visibilityRatio: 1,
+		constrainDuringPan: true,
+		defaultZoomLevel: getCoverZoom(),
+		minZoomLevel: getCoverZoom(),
+	});
+
+	viewer.addOnceHandler('open', function () {
+		viewer.addHandler('resize', function () {
+			const coverZoom = getCoverZoom();
+			viewer.viewport.minZoomLevel = coverZoom;
+			const current = viewer.viewport.getZoom();
+			if (current < coverZoom) {
+				viewer.viewport.zoomTo(coverZoom, null, true);
+			}
+		});
+	});
+</script>
