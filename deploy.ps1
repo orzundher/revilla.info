@@ -22,6 +22,13 @@ try {
     # Construir
     Run-External -Command 'npm' -Arguments @('run','build')
 
+    # Eliminar datos de nubes de puntos del dist antes de desplegar (demasiado grandes para SWA)
+    $pointcloudsDir = Join-Path $PSScriptRoot 'dist\assets\pointclouds'
+    if (Test-Path $pointcloudsDir) {
+        Write-Host "Removing point cloud data from dist (excluded from deploy)..."
+        Remove-Item -Recurse -Force $pointcloudsDir
+    }
+
     # Desplegar (swa CLI)
     Run-External -Command 'swa' -Arguments @('deploy','--env','production')
 

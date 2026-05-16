@@ -1,13 +1,23 @@
 ---
 import Layout from '../layouts/Layout.astro';
 
-const skills = [
-	'JavaScript',
-	'TypeScript',
-	'React',
-	'Astro',
-	'Node.js',
-	'CSS / SCSS',
+const categories = [
+	{
+		title: 'Languajes',
+		items: ['C#', 'JavaScript', 'Go', 'TypeScript', 'Java', 'Kotlin']
+	},
+	{
+		title: 'DevOps & Containers',
+		items: ['Kubernetes (Advanced)', 'Docker (Advanced)']
+	},
+	{
+		title: 'Cloud',
+		items: ['Microsoft Azure (Permanent work context)']
+	},
+	{
+		title: 'Web & Frameworks',
+		items: ['Node.js', 'React', 'Astro', 'CSS / SCSS']
+	}
 ];
 ---
 
@@ -15,11 +25,17 @@ const skills = [
 	<section class="page">
 		<div class="container">
 			<h1 class="page-title">Skills</h1>
-			<ul class="skills-list">
-				{skills.map((skill) => (
-					<li class="skill-item">{skill}</li>
-				))}
-			</ul>
+			
+			{categories.map((category) => (
+				<div class="category-section">
+					<h2 class="category-title">{category.title}</h2>
+					<ul class="skills-list">
+						{category.items.map((skill) => (
+							<li class="skill-item">{skill}</li>
+						))}
+					</ul>
+				</div>
+			))}
 		</div>
 	</section>
 </Layout>
@@ -40,14 +56,30 @@ const skills = [
 		margin-bottom: 2.5rem;
 	}
 
+	.category-section {
+		margin-bottom: 3rem;
+	}
+
+	.category-title {
+		font-size: 1.25rem;
+		font-weight: 600;
+		color: #94a3b8;
+		margin-bottom: 1rem;
+		text-transform: uppercase;
+		letter-spacing: 0.1em;
+	}
+
 	.skills-list {
 		list-style: none;
 		border-top: 1px solid #334155;
 	}
 
 	.skill-item {
-		padding: 1.25rem 0;
+		padding: 1rem 0;
 		border-bottom: 1px solid #334155;
+		font-size: 1.125rem;
+	}
+</style>
 		font-size: 1.125rem;
 		color: #e2e8f0;
 	}
