@@ -1,0 +1,378 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="Point Clouds — Revilla" fullscreen={true}>
+  <div id="pointcloud-container">
+    <canvas id="pointcloud-canvas"></canvas>
+    <div id="ui">
+      <label for="cloud-url">URL:</label>
+      <input id="cloud-url" type="text" value="/assets/pointclouds/berlin/metadata.json" />
+      <select id="version">
+        <option value="v2">Potree v2 (metadata.json)</option>
+        <option value="v1">Potree v1 (cloud.js)</option>
+      </select>
+      <button id="load-btn">Load</button>
+    </div>
+    <div id="info">
+      <span id="status">No point cloud loaded.</span>
+    </div>
+    <div id="view-helper-container"></div>
+  </div>
+</Layout>
+
+<script>
+  import * as THREE from 'three';
+  import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+  import { ViewHelper } from 'three/examples/jsm/helpers/ViewHelper.js';
+  import { Potree, PointCloudOctree, PointShape, PointSizeType } from '@pnext/three-loader';
+
+  const canvas = document.getElementById('pointcloud-canvas') as HTMLCanvasElement;
+  const status = document.getElementById('status') as HTMLElement;
+
+  // ── Renderer ──────────────────────────────────────────────────────────────
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+  renderer.setPixelRatio(window.devicePixelRatio);
+  renderer.setSize(window.innerWidth, window.innerHeight);
+
+  // ── Scene & Camera ────────────────────────────────────────────────────────
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x0a0a0a);
+
+  const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 100000);
+  camera.position.set(0, 5, 10);
+  camera.up.set(0, 0, 1); // Z-up (coordenadas Potree/LiDAR)
+  scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+
+  // ── Esfera pivot ───────────────────────────────────────────────────────────
+  const pivotMat = new THREE.MeshBasicMaterial({
+    color: 0xffcc00,
+    transparent: true,
+    opacity: 0,
+    depthTest: false,
+  });
+  const pivotSphere = new THREE.Mesh(new THREE.SphereGeometry(1, 16, 16), pivotMat);
+  pivotSphere.renderOrder = 999;
+  scene.add(pivotSphere);
+
+  let pivotFade = 0; // 0 = invisible, >0 = visible (countdown en segundos)
+
+  // ── OrbitControls (navegación tipo Potree) ────────────────────────────────
+  const controls = new OrbitControls(camera, canvas);
+  controls.enableDamping = true;
+  controls.dampingFactor = 0.08;
+  controls.screenSpacePanning = false;
+  controls.rotateSpeed = 0.6;
+  controls.panSpeed = 0.8;
+  controls.enableZoom = false; // zoom manual para comportamiento proporcional
+  controls.mouseButtons = {
+    LEFT: THREE.MOUSE.ROTATE,
+    MIDDLE: THREE.MOUSE.DOLLY,
+    RIGHT: THREE.MOUSE.PAN,
+  };
+
+  // Zoom proporcional a la distancia al target (igual que Potree)
+  canvas.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    const distToTarget = camera.position.distanceTo(controls.target);
+    const zoomFactor = e.deltaY > 0 ? 0.15 : -0.15;
+    const step = distToTarget * zoomFactor;
+    const dir = new THREE.Vector3().subVectors(controls.target, camera.position).normalize();
+    camera.position.addScaledVector(dir, step);
+    controls.update();
+    pivotFade = 1.2; // mostrar esfera al hacer zoom
+  }, { passive: false });
+
+  // Mostrar esfera al rotar/pan
+  canvas.addEventListener('pointerdown', () => { pivotFade = 1.2; });
+
+  // ── ViewHelper ─────────────────────────────────────────────────────────────
+  const viewHelperContainer = document.getElementById('view-helper-container') as HTMLDivElement;
+  const viewHelper = new ViewHelper(camera, viewHelperContainer);
+  viewHelperContainer.addEventListener('pointerup', (ev) => {
+    ev.stopPropagation();
+    viewHelper.handleClick(ev as PointerEvent);
+  });
+  viewHelperContainer.addEventListener('dblclick', (ev) => ev.stopPropagation());
+
+  // ── Potree ────────────────────────────────────────────────────────────────
+  const potree_v1 = new Potree('v1');
+  const potree_v2 = new Potree('v2');
+  potree_v1.pointBudget = 2_000_000;
+  potree_v2.pointBudget = 2_000_000;
+  const pointClouds: PointCloudOctree[] = [];
+
+  // ── Double-click → reapuntar cámara ──────────────────────────────────────
+  // Estrategia: raycast contra la bounding sphere de la nube para obtener
+  // un punto de impacto aproximado, y animamos el target de OrbitControls.
+  const raycaster = new THREE.Raycaster();
+  raycaster.params.Points = { threshold: 0.5 };
+
+  let animTarget: THREE.Vector3 | null = null;
+  let animOrigin: THREE.Vector3 | null = null;
+  let animCamOrigin: THREE.Vector3 | null = null;
+  let animT = 1;
+  const ANIM_DURATION = 0.25; // segundos
+
+  canvas.addEventListener('dblclick', (e) => {
+    if (pointClouds.length === 0) return;
+
+    const rect = canvas.getBoundingClientRect();
+    const ndc = new THREE.Vector2(
+      ((e.clientX - rect.left) / rect.width) * 2 - 1,
+      -((e.clientY - rect.top) / rect.height) * 2 + 1,
+    );
+
+    raycaster.setFromCamera(ndc, camera);
+
+    // Threshold proporcional a la distancia al target: más lejos → ventana más grande
+    const distToTarget = camera.position.distanceTo(controls.target);
+    raycaster.params.Points = { threshold: distToTarget * 0.008 };
+
+    let hitPoint: THREE.Vector3 | null = null;
+
+    // 1) Intentar hit real contra los nodos Points visibles del PCO
+    for (const pco of pointClouds) {
+      const hits = raycaster.intersectObject(pco, true);
+      if (hits.length > 0) {
+        // El hit más cercano a la cámara
+        hitPoint = hits[0].point.clone();
+        break;
+      }
+    }
+
+    // 2) Fallback: intersectar bounding sphere
+    if (!hitPoint) {
+      const ray = raycaster.ray;
+      let bestDist = Infinity;
+      for (const pco of pointClouds) {
+        const worldBox = pco.pcoGeometry.boundingBox.clone().applyMatrix4(pco.matrixWorld);
+        const sphere = worldBox.getBoundingSphere(new THREE.Sphere());
+        const target3 = new THREE.Vector3();
+        if (ray.intersectSphere(sphere, target3)) {
+          const d = camera.position.distanceTo(target3);
+          if (d < bestDist) { bestDist = d; hitPoint = target3.clone(); }
+        }
+      }
+    }
+
+    // 3) Último fallback: proyectar a la distancia actual del target
+    if (!hitPoint) {
+      hitPoint = raycaster.ray.at(distToTarget, new THREE.Vector3());
+    }
+
+    const camPos = camera.position.clone();
+    animOrigin = controls.target.clone();
+    animTarget = hitPoint;
+    animCamOrigin = camPos;
+    animT = 0;
+    pivotFade = 2.0;
+  });
+
+  // ── Load point cloud ──────────────────────────────────────────────────────
+  async function loadPointCloud(url: string, version: 'v1' | 'v2') {
+    for (const pco of pointClouds) scene.remove(pco);
+    pointClouds.length = 0;
+
+    // Resolver URL relativa o absoluta usando el origin actual
+    const fullUrl = new URL(url, window.location.href).href;
+    const lastSlash = fullUrl.lastIndexOf('/');
+    const baseUrl = fullUrl.substring(0, lastSlash + 1);
+    const fileName = fullUrl.substring(lastSlash + 1);
+    const potree = version === 'v2' ? potree_v2 : potree_v1;
+
+    status.textContent = `Cargando (Potree ${version})…`;
+    try {
+      const pco = await potree.loadPointCloud(
+        fileName,
+        (rel: string) => `${baseUrl}${rel}`,
+      );
+
+      // Centrar la nube en origen basándonos en su bounding box local
+      const localBox: THREE.Box3 = pco.pcoGeometry.boundingBox;
+      const localCenter = localBox.getCenter(new THREE.Vector3());
+      pco.position.set(-localCenter.x, -localCenter.y, -localCenter.z);
+
+      scene.add(pco);
+      pointClouds.push(pco);
+
+      // Ajustar cámara y controls al tamaño de la nube
+      pco.updateMatrixWorld(true);
+      const worldBox = localBox.clone().applyMatrix4(pco.matrixWorld);
+      const worldCenter = worldBox.getCenter(new THREE.Vector3());
+      const size = worldBox.getSize(new THREE.Vector3());
+      const maxDim = Math.max(size.x, size.y, size.z);
+
+      controls.target.copy(worldCenter);
+      camera.position.set(
+        worldCenter.x,
+        worldCenter.y + maxDim * 0.5,
+        worldCenter.z + maxDim * 1.2,
+      );
+      camera.near = maxDim * 0.001;
+      camera.far = maxDim * 50;
+      camera.updateProjectionMatrix();
+      controls.update();
+
+      pco.material.size = 0.7;
+      pco.material.shape = PointShape.CIRCLE;
+      pco.material.pointSizeType = PointSizeType.ADAPTIVE;
+
+      status.textContent = 'Listo';
+    } catch (err) {
+      console.error(err);
+      status.textContent = `Error: ${(err as Error).message}`;
+    }
+  }
+
+  document.getElementById('load-btn')!.addEventListener('click', () => {
+    const url = (document.getElementById('cloud-url') as HTMLInputElement).value.trim();
+    const version = (document.getElementById('version') as HTMLSelectElement).value as 'v1' | 'v2';
+    if (url) loadPointCloud(url, version);
+  });
+
+  // Cargar la nube por defecto al iniciar
+  {
+    const url = (document.getElementById('cloud-url') as HTMLInputElement).value.trim();
+    const version = (document.getElementById('version') as HTMLSelectElement).value as 'v1' | 'v2';
+    if (url) loadPointCloud(url, version);
+  }
+
+  // ── Animation loop ────────────────────────────────────────────────────────
+  const clock = new THREE.Clock();
+
+  function animate() {
+    requestAnimationFrame(animate);
+    const dt = clock.getDelta();
+
+    // Animar pivot (doble click) — cámara fija, solo mueve el target de órbita
+    if (animT < 1 && animTarget && animOrigin && animCamOrigin) {
+      animT = Math.min(1, animT + dt / ANIM_DURATION);
+      const t = 1 - Math.pow(1 - animT, 3); // ease-out cubic
+      controls.target.lerpVectors(animOrigin, animTarget, t);
+      camera.position.copy(animCamOrigin); // mantener posición de cámara fija durante la animación
+    }
+
+    controls.update();
+    potree_v1.updatePointClouds(pointClouds, camera, renderer);
+    potree_v2.updatePointClouds(pointClouds, camera, renderer);
+
+    // Esfera pivot: posición + tamaño proporcional a distancia + fade
+    const distToPivot = camera.position.distanceTo(controls.target);
+    pivotSphere.position.copy(controls.target);
+    pivotSphere.scale.setScalar(distToPivot * 0.012);
+    if (pivotFade > 0) {
+      pivotFade = Math.max(0, pivotFade - dt);
+      pivotMat.opacity = Math.min(1, pivotFade * 4) * 0.85;
+    } else {
+      pivotMat.opacity = 0;
+    }
+
+    renderer.autoClear = true;
+    renderer.render(scene, camera);
+
+    // ViewHelper — renderizar sobre la escena sin limpiar el depth
+    if (viewHelper.animating) viewHelper.update(dt);
+    viewHelper.center.copy(controls.target);
+    renderer.autoClear = false;
+    renderer.clearDepth();
+    viewHelper.render(renderer);
+    renderer.autoClear = true;
+  }
+  animate();
+
+  // ── Resize ────────────────────────────────────────────────────────────────
+  window.addEventListener('resize', () => {
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+  });
+</script>
+
+<style>
+  #pointcloud-container {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  #pointcloud-canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+
+  #ui {
+    position: absolute;
+    top: 5rem;
+    left: 1rem;
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    background: rgba(0, 0, 0, 0.6);
+    padding: 0.5rem 0.75rem;
+    border-radius: 6px;
+    font-size: 0.85rem;
+  }
+
+  #ui label {
+    color: #ccc;
+    white-space: nowrap;
+  }
+
+  #ui input {
+    background: #1a1a1a;
+    border: 1px solid #444;
+    color: #fff;
+    padding: 0.3rem 0.5rem;
+    border-radius: 4px;
+    width: 340px;
+    font-size: 0.85rem;
+  }
+
+  #ui select {
+    background: #1a1a1a;
+    border: 1px solid #444;
+    color: #fff;
+    padding: 0.3rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    cursor: pointer;
+  }
+
+  #ui button {
+    background: #2d6cdf;
+    color: #fff;
+    border: none;
+    padding: 0.3rem 0.75rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.85rem;
+  }
+
+  #ui button:hover {
+    background: #1a53b0;
+  }
+
+  #info {
+    position: absolute;
+    top: 5rem;
+    right: 1rem;
+    background: rgba(0, 0, 0, 0.5);
+    color: #aaa;
+    padding: 0.4rem 0.75rem;
+    border-radius: 4px;
+    font-size: 0.8rem;
+  }
+
+  #view-helper-container {
+    position: absolute;
+    right: 8px;
+    bottom: 8px;
+    width: 128px;
+    height: 128px;
+    z-index: 5;
+    cursor: pointer;
+  }
+</style>
