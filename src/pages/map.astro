@@ -71,6 +71,22 @@ import Layout from '../layouts/Layout.astro';
   // ── GeoJSON sources ──────────────────────────────────────────────────────
   map.on('style.load', () => {
 
+    // West Berlin boundary (static)
+    map.addSource('westberlin', {
+      type: 'geojson',
+      data: '/assets/features/WestBerlin.geojson',
+    });
+    map.addLayer({
+      id: 'westberlin-line',
+      type: 'line',
+      source: 'westberlin',
+      paint: {
+        'line-color': '#e53e3e',
+        'line-width': 2,
+        'line-opacity': 0.85,
+      },
+    });
+
     // Berlin Ortsteile boundaries
     map.addSource('ortsteile', {
       type: 'geojson',
