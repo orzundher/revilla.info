@@ -4,20 +4,327 @@ import Layout from '../layouts/Layout.astro';
 
 <Layout title="Map — Revilla" fullscreen={true}>
   <div id="map"></div>
+  <div id="coords">—</div>
+
+  <div id="toolbar">
+    <button id="btn-draw" title="Dibujar polígono">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+    </button>
+    <button id="btn-undo" title="Deshacer último punto" disabled>
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg>
+    </button>
+    <button id="btn-clear" title="Borrar todo" disabled>
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+    </button>
+  </div>
+
+  <div id="height-panel" style="display:none">
+    <label for="height-input">Altura (m)</label>
+    <input id="height-input" type="range" min="1" max="500" value="30" step="1" />
+    <span id="height-val">30 m</span>
+  </div>
 </Layout>
 
 <script>
   import maplibregl from 'maplibre-gl';
   import 'maplibre-gl/dist/maplibre-gl.css';
 
+  // ── Map ──────────────────────────────────────────────────────────────────
   const map = new maplibregl.Map({
     container: 'map',
     style: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
-    center: [13.3777, 52.5163],
+    center: [13.396, 52.52],
     zoom: 11,
+    pitch: 0,
+    attributionControl: { compact: true },
   });
 
   map.addControl(new maplibregl.NavigationControl(), 'bottom-left');
+
+  map.on('load', () => {
+    // Collapse attribution by default
+    document.querySelector('.maplibregl-ctrl-attrib')?.classList.remove('maplibregl-compact-show');
+  });
+
+  // Coordinate indicator
+  const coordsEl = document.getElementById('coords')!;
+  map.on('mousemove', (e) => {
+    const { lng, lat } = e.lngLat.wrap();
+    coordsEl.textContent = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+  });
+  map.on('mouseleave', () => { coordsEl.textContent = '—'; });
+
+  // ── State ────────────────────────────────────────────────────────────────
+  let drawing = false;
+  let currentRing: [number, number][] = [];   // points of polygon being drawn
+  let polygons: { ring: [number, number][]; height: number }[] = [];
+  let height = 30;
+
+  // ── UI elements ──────────────────────────────────────────────────────────
+  const btnDraw    = document.getElementById('btn-draw')!;
+  const btnUndo    = document.getElementById('btn-undo') as HTMLButtonElement;
+  const btnClear   = document.getElementById('btn-clear') as HTMLButtonElement;
+  const heightPanel = document.getElementById('height-panel') as HTMLDivElement;
+  const heightInput = document.getElementById('height-input') as HTMLInputElement;
+  const heightVal   = document.getElementById('height-val')!;
+
+  // ── GeoJSON sources ──────────────────────────────────────────────────────
+  map.on('style.load', () => {
+
+    // Berlin Ortsteile boundaries
+    map.addSource('ortsteile', {
+      type: 'geojson',
+      data: '/assets/features/BerlinOrtsteile.geojson',
+      generateId: true,
+    });
+    map.addLayer({
+      id: 'ortsteile-fill',
+      type: 'fill',
+      source: 'ortsteile',
+      paint: {
+        'fill-color': '#ffffff',
+        'fill-opacity': ['case', ['boolean', ['feature-state', 'hover'], false], 0.08, 0.02],
+      },
+    });
+    map.addLayer({
+      id: 'ortsteile-line',
+      type: 'line',
+      source: 'ortsteile',
+      paint: {
+        'line-color': ['case', ['boolean', ['feature-state', 'hover'], false], '#39ff14', '#ffffff'],
+        'line-opacity': ['case', ['boolean', ['feature-state', 'hover'], false], 1, 0.25],
+        'line-width': ['case', ['boolean', ['feature-state', 'hover'], false], 2.5, 1],
+      },
+    });
+    map.addLayer({
+      id: 'ortsteile-label',
+      type: 'symbol',
+      source: 'ortsteile',
+      layout: {
+        'text-field': ['get', 'name'],
+        'text-size': 11,
+        'text-font': ['Noto Sans Regular'],
+        'text-anchor': 'center',
+        'text-max-width': 8,
+      },
+      paint: {
+        'text-color': '#39ff14',
+        'text-opacity': ['case', ['boolean', ['feature-state', 'hover'], false], 1, 0],
+        'text-halo-color': '#000000',
+        'text-halo-width': 1.5,
+      },
+    });
+
+    // Hover state tracking
+    let hoveredId: number | string | null = null;
+    map.on('mousemove', 'ortsteile-fill', (e) => {
+      if (e.features && e.features.length > 0) {
+        if (hoveredId !== null) {
+          map.setFeatureState({ source: 'ortsteile', id: hoveredId }, { hover: false });
+        }
+        hoveredId = e.features[0].id ?? null;
+        if (hoveredId !== null) {
+          map.setFeatureState({ source: 'ortsteile', id: hoveredId }, { hover: true });
+        }
+      }
+    });
+    map.on('mouseleave', 'ortsteile-fill', () => {
+      if (hoveredId !== null) {
+        map.setFeatureState({ source: 'ortsteile', id: hoveredId }, { hover: false });
+        hoveredId = null;
+      }
+    });
+
+    // Source for finished polygons
+    map.addSource('polygons', {
+      type: 'geojson',
+      data: emptyCollection(),
+    });
+
+    // Source for the polygon being drawn (preview)
+    map.addSource('preview', {
+      type: 'geojson',
+      data: emptyCollection(),
+    });
+
+    // Extrusion layer — finished polygons
+    map.addLayer({
+      id: 'polygons-extrusion',
+      type: 'fill-extrusion',
+      source: 'polygons',
+      paint: {
+        'fill-extrusion-color': '#e53e3e',
+        'fill-extrusion-opacity': 0.8,
+        'fill-extrusion-height': ['get', 'height'],
+        'fill-extrusion-base': 0,
+      },
+    });
+
+    // Flat fill for preview polygon
+    map.addLayer({
+      id: 'preview-fill',
+      type: 'fill',
+      source: 'preview',
+      paint: {
+        'fill-color': '#e53e3e',
+        'fill-opacity': 0.25,
+      },
+    });
+
+    // Outline for preview polygon
+    map.addLayer({
+      id: 'preview-line',
+      type: 'line',
+      source: 'preview',
+      paint: {
+        'line-color': '#e53e3e',
+        'line-width': 2,
+        'line-dasharray': [3, 2],
+      },
+    });
+
+    // Dots for placed vertices
+    map.addSource('vertices', { type: 'geojson', data: emptyCollection() });
+    map.addLayer({
+      id: 'vertices-circle',
+      type: 'circle',
+      source: 'vertices',
+      paint: {
+        'circle-radius': 5,
+        'circle-color': '#fff',
+        'circle-stroke-color': '#e53e3e',
+        'circle-stroke-width': 2,
+      },
+    });
+  });
+
+  // ── Map click / dblclick ─────────────────────────────────────────────────
+  map.on('click', (e) => {
+    if (!drawing) return;
+    const pt: [number, number] = [e.lngLat.lng, e.lngLat.lat];
+    currentRing.push(pt);
+    btnUndo.disabled = false;
+    updatePreview();
+  });
+
+  map.on('dblclick', (e) => {
+    if (!drawing) return;
+    e.preventDefault(); // prevent zoom
+    // Remove last point added by the click event that fired just before dblclick
+    currentRing.pop();
+    if (currentRing.length < 3) {
+      alert('Necesitas al menos 3 puntos para crear un polígono.');
+      return;
+    }
+    closePolygon();
+  });
+
+  // ── Toolbar buttons ──────────────────────────────────────────────────────
+  btnDraw.addEventListener('click', () => {
+    drawing = !drawing;
+    if (drawing) {
+      currentRing = [];
+      btnDraw.classList.add('active');
+      map.getCanvas().style.cursor = 'crosshair';
+    } else {
+      cancelDraw();
+    }
+  });
+
+  btnUndo.addEventListener('click', () => {
+    if (!drawing || currentRing.length === 0) return;
+    currentRing.pop();
+    btnUndo.disabled = currentRing.length === 0;
+    updatePreview();
+  });
+
+  btnClear.addEventListener('click', () => {
+    polygons = [];
+    refreshPolygons();
+    btnClear.disabled = true;
+  });
+
+  // Height slider
+  heightInput.addEventListener('input', () => {
+    height = parseInt(heightInput.value, 10);
+    heightVal.textContent = `${height} m`;
+    polygons.forEach((p) => { p.height = height; });
+    refreshPolygons();
+  });
+
+  // ── Helpers ───────────────────────────────────────────────────────────────
+  function closePolygon() {
+    polygons.push({ ring: [...currentRing], height });
+    currentRing = [];
+    drawing = false;
+    btnDraw.classList.remove('active');
+    btnDraw.textContent = '✏️ Dibujar';
+    btnUndo.disabled = true;
+    btnClear.disabled = false;
+    map.getCanvas().style.cursor = '';
+    clearPreview();
+    refreshPolygons();
+    heightPanel.style.display = 'flex';
+  }
+
+  function cancelDraw() {
+    currentRing = [];
+    drawing = false;
+    btnDraw.classList.remove('active');
+    btnUndo.disabled = true;
+    map.getCanvas().style.cursor = '';
+    clearPreview();
+  }
+
+  function updatePreview() {
+    if (currentRing.length === 0) { clearPreview(); return; }
+
+    const ring = currentRing.length >= 3
+      ? [...currentRing, currentRing[0]]  // close it visually
+      : currentRing;
+
+    const src = map.getSource('preview') as maplibregl.GeoJSONSource;
+    src.setData({
+      type: 'FeatureCollection',
+      features: [{
+        type: 'Feature',
+        geometry: { type: 'Polygon', coordinates: [ring.length >= 4 ? ring : currentRing] },
+        properties: {},
+      }],
+    });
+
+    const vsrc = map.getSource('vertices') as maplibregl.GeoJSONSource;
+    vsrc.setData({
+      type: 'FeatureCollection',
+      features: currentRing.map(([lng, lat]) => ({
+        type: 'Feature',
+        geometry: { type: 'Point', coordinates: [lng, lat] },
+        properties: {},
+      })),
+    });
+  }
+
+  function clearPreview() {
+    (map.getSource('preview') as maplibregl.GeoJSONSource)?.setData(emptyCollection());
+    (map.getSource('vertices') as maplibregl.GeoJSONSource)?.setData(emptyCollection());
+  }
+
+  function refreshPolygons() {
+    const src = map.getSource('polygons') as maplibregl.GeoJSONSource;
+    if (!src) return;
+    src.setData({
+      type: 'FeatureCollection',
+      features: polygons.map((p) => ({
+        type: 'Feature',
+        geometry: { type: 'Polygon', coordinates: [[...p.ring, p.ring[0]]] },
+        properties: { height: p.height },
+      })),
+    });
+  }
+
+  function emptyCollection(): GeoJSON.FeatureCollection {
+    return { type: 'FeatureCollection', features: [] };
+  }
 </script>
 
 <style>
@@ -28,4 +335,96 @@ import Layout from '../layouts/Layout.astro';
     height: 100%;
     z-index: 0;
   }
+
+  #coords {
+    position: fixed;
+    bottom: 1rem;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10;
+    background: rgba(0, 0, 0, 0.55);
+    color: #e2e8f0;
+    font-family: monospace;
+    font-size: 0.75rem;
+    padding: 0.3rem 0.6rem;
+    border-radius: 4px;
+    pointer-events: none;
+    backdrop-filter: blur(4px);
+  }
+
+  #toolbar {
+    position: fixed;
+    top: 5rem;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10;
+    display: flex;
+    gap: 0.5rem;
+  }
+
+  #toolbar button {
+    background: rgba(15, 23, 42, 0.75);
+    color: #ffffff;
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 6px;
+    padding: 0.45rem 0.55rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    backdrop-filter: blur(4px);
+    transition: background 0.15s;
+  }
+
+  #toolbar button:hover:not(:disabled) {
+    background: rgba(51, 65, 85, 0.9);
+  }
+
+  #toolbar button:disabled {
+    opacity: 0.4;
+    cursor: default;
+  }
+
+  #toolbar button.active {
+    background: rgba(255,255,255,0.2);
+    border-color: rgba(255,255,255,0.4);
+  }
+
+  #height-panel {
+    position: fixed;
+    top: 8.5rem;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10;
+    background: rgba(15, 23, 42, 0.85);
+    color: #e2e8f0;
+    font-family: monospace;
+    font-size: 0.8rem;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    border: 1px solid #334155;
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    white-space: nowrap;
+  }
+
+  #height-input {
+    accent-color: #e53e3e;
+    width: 140px;
+  }
+
+  /* Attribution collapsed by default */
+  :global(.maplibregl-ctrl-attrib.maplibregl-compact) {
+    background-color: transparent;
+  }
+  :global(.maplibregl-ctrl-attrib-inner) {
+    display: none;
+  }
+  :global(.maplibregl-ctrl-attrib.maplibregl-compact-show .maplibregl-ctrl-attrib-inner) {
+    display: block;
+  }
+
+
 </style>

@@ -63,40 +63,41 @@ const navLinks = [
 
 		<script>
 			(function () {
-				var header = document.querySelector('.header');
-				var btn = document.querySelector('.hamburger');
+				var header = document.querySelector('.header') as HTMLElement | null;
+				var btn = document.querySelector('.hamburger') as HTMLElement | null;
 				var overlay = document.getElementById('mobile-menu');
 				if (!btn || !overlay || !header) return;
+				var h = header, b = btn, o = overlay;
 
 				function openMenu() {
-					header.classList.add('menu-open');
+					h.classList.add('menu-open');
 					document.body.style.overflow = 'hidden';
-					btn.setAttribute('aria-expanded', 'true');
-					overlay.setAttribute('aria-hidden', 'false');
+					b.setAttribute('aria-expanded', 'true');
+					o.setAttribute('aria-hidden', 'false');
 				}
 				function closeMenu() {
-					header.classList.remove('menu-open');
+					h.classList.remove('menu-open');
 					document.body.style.overflow = '';
-					btn.setAttribute('aria-expanded', 'false');
-					overlay.setAttribute('aria-hidden', 'true');
+					b.setAttribute('aria-expanded', 'false');
+					o.setAttribute('aria-hidden', 'true');
 				}
 
-				btn.addEventListener('click', function () {
-					header.classList.contains('menu-open') ? closeMenu() : openMenu();
+				b.addEventListener('click', function () {
+					h.classList.contains('menu-open') ? closeMenu() : openMenu();
 				});
-				overlay.addEventListener('click', function (e) {
-					if (e.target === overlay) closeMenu();
+				o.addEventListener('click', function (e) {
+					if (e.target === o) closeMenu();
 				});
 				document.addEventListener('keydown', function (e) {
-					if (e.key === 'Escape' && header.classList.contains('menu-open')) {
-						closeMenu(); btn.focus();
+					if (e.key === 'Escape' && h.classList.contains('menu-open')) {
+						closeMenu(); b.focus();
 					}
 				});
-				overlay.querySelectorAll('a').forEach(function (a) {
+				o.querySelectorAll('a').forEach(function (a) {
 					a.addEventListener('click', closeMenu);
 				});
 				window.addEventListener('resize', function () {
-					if (window.innerWidth > 1024 && header.classList.contains('menu-open')) closeMenu();
+					if (window.innerWidth > 1024 && h.classList.contains('menu-open')) closeMenu();
 				});
 			})();
 		</script>

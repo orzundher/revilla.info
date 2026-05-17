@@ -12,7 +12,6 @@
     "@pnext/three-loader": "^1.0.0",
     "astro": "^6.3.3",
     "maplibre-gl": "^5.18.0",
-    "openseadragon": "^6.0.0",
-    "three": "^0.160.1"
+    "openseadragon": "^6.0.0"
   }
 }
