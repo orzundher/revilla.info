@@ -29,6 +29,23 @@ import Layout from '../layouts/Layout.astro';
 
   const canvas = document.getElementById('pointcloud-canvas') as HTMLCanvasElement;
   const status = document.getElementById('status') as HTMLElement;
+  const urlInput = document.getElementById('cloud-url') as HTMLInputElement;
+  const versionSelect = document.getElementById('version') as HTMLSelectElement;
+
+  // ── LocalStorage helpers ──────────────────────────────────────────────────
+  const LS_KEY = 'pointcloud_state';
+  function saveState() {
+    const state = {
+      url: urlInput.value.trim(),
+      version: versionSelect.value,
+      cam: { x: camera.position.x, y: camera.position.y, z: camera.position.z },
+      target: { x: controls.target.x, y: controls.target.y, z: controls.target.z },
+    };
+    localStorage.setItem(LS_KEY, JSON.stringify(state));
+  }
+  function loadState() {
+    try { return JSON.parse(localStorage.getItem(LS_KEY) || 'null'); } catch { return null; }
+  }
 
   // ── Renderer ──────────────────────────────────────────────────────────────
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
@@ -75,7 +92,7 @@ import Layout from '../layouts/Layout.astro';
   canvas.addEventListener('wheel', (e) => {
     e.preventDefault();
     const distToTarget = camera.position.distanceTo(controls.target);
-    const zoomFactor = e.deltaY > 0 ? 0.15 : -0.15;
+    const zoomFactor = e.deltaY > 0 ? -0.15 : 0.15;
     const step = distToTarget * zoomFactor;
     const dir = new THREE.Vector3().subVectors(controls.target, camera.position).normalize();
     camera.position.addScaledVector(dir, step);
@@ -101,6 +118,7 @@ import Layout from '../layouts/Layout.astro';
   potree_v1.pointBudget = 2_000_000;
   potree_v2.pointBudget = 2_000_000;
   const pointClouds: PointCloudOctree[] = [];
+  let _saveTimer = 0;
 
   // ── Double-click → reapuntar cámara ──────────────────────────────────────
   // Estrategia: raycast contra la bounding sphere de la nube para obtener
@@ -227,17 +245,38 @@ import Layout from '../layouts/Layout.astro';
     }
   }
 
+  // Restore URL + version from localStorage
+  const _saved = loadState();
+  if (_saved?.url) {
+    urlInput.value = _saved.url;
+    if (_saved.version) versionSelect.value = _saved.version;
+  }
+
   document.getElementById('load-btn')!.addEventListener('click', () => {
-    const url = (document.getElementById('cloud-url') as HTMLInputElement).value.trim();
-    const version = (document.getElementById('version') as HTMLSelectElement).value as 'v1' | 'v2';
-    if (url) loadPointCloud(url, version);
+    const url = urlInput.value.trim();
+    const version = versionSelect.value as 'v1' | 'v2';
+    if (!url) return;
+    localStorage.setItem(LS_KEY, JSON.stringify({ url, version })); // persist before load
+    loadPointCloud(url, version).then(() => {
+      // Restore camera position if saved for this URL
+      const s = loadState();
+      if (s?.cam && s?.url === url) {
+        camera.position.set(s.cam.x, s.cam.y, s.cam.z);
+        controls.target.set(s.target.x, s.target.y, s.target.z);
+        controls.update();
+      }
+    });
   });
 
-  // Cargar la nube por defecto al iniciar
-  {
-    const url = (document.getElementById('cloud-url') as HTMLInputElement).value.trim();
-    const version = (document.getElementById('version') as HTMLSelectElement).value as 'v1' | 'v2';
-    if (url) loadPointCloud(url, version);
+  // Auto-load if URL was saved
+  if (_saved?.url) {
+    loadPointCloud(_saved.url, (_saved.version || 'v2') as 'v1' | 'v2').then(() => {
+      if (_saved.cam) {
+        camera.position.set(_saved.cam.x, _saved.cam.y, _saved.cam.z);
+        controls.target.set(_saved.target.x, _saved.target.y, _saved.target.z);
+        controls.update();
+      }
+    });
   }
 
   // ── Animation loop ────────────────────────────────────────────────────────
@@ -256,6 +295,11 @@ import Layout from '../layouts/Layout.astro';
     }
 
     controls.update();
+    // Persist camera position every ~2 s
+    if (pointClouds.length > 0) {
+      _saveTimer = (_saveTimer || 0) + dt;
+      if (_saveTimer >= 2) { _saveTimer = 0; saveState(); }
+    }
     potree_v1.updatePointClouds(pointClouds, camera, renderer);
     potree_v2.updatePointClouds(pointClouds, camera, renderer);
 
