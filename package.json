@@ -9,6 +9,7 @@
     "astro": "astro"
   },
   "dependencies": {
+    "@azure/static-web-apps-cli": "^2.0.9",
     "@pnext/three-loader": "^1.0.0",
     "astro": "^6.3.3",
     "maplibre-gl": "^5.18.0",

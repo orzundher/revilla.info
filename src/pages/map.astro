@@ -45,13 +45,25 @@ import Layout from '../layouts/Layout.astro';
   map.on('load', () => {
     // Collapse attribution by default
     document.querySelector('.maplibregl-ctrl-attrib')?.classList.remove('maplibregl-compact-show');
+
+    // Terrain — AWS Terrarium DEM
+    map.addSource('terrain-dem', {
+      type: 'raster-dem',
+      tiles: ['https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png'],
+      tileSize: 256,
+      encoding: 'terrarium',
+      maxzoom: 15,
+    });
+    map.setTerrain({ source: 'terrain-dem', exaggeration: 1.5 });
   });
 
   // Coordinate indicator
   const coordsEl = document.getElementById('coords')!;
   map.on('mousemove', (e) => {
     const { lng, lat } = e.lngLat.wrap();
-    coordsEl.textContent = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+    const elev = map.queryTerrainElevation(e.lngLat);
+    const elevStr = elev != null ? ` · ${Math.round(elev)} m` : '';
+    coordsEl.textContent = `${lat.toFixed(6)}, ${lng.toFixed(6)}${elevStr}`;
   });
   map.on('mouseleave', () => { coordsEl.textContent = '—'; });
 
@@ -275,7 +287,6 @@ import Layout from '../layouts/Layout.astro';
     currentRing = [];
     drawing = false;
     btnDraw.classList.remove('active');
-    btnDraw.textContent = '✏️ Dibujar';
     btnUndo.disabled = true;
     btnClear.disabled = false;
     map.getCanvas().style.cursor = '';

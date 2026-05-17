@@ -15,7 +15,7 @@ import Layout from '../layouts/Layout.astro';
       <button id="load-btn">Load</button>
     </div>
     <div id="info">
-      <span id="status">No point cloud loaded.</span>
+      <span id="status" style="display:none"></span>
     </div>
     <div id="view-helper-container"></div>
   </div>
@@ -181,7 +181,8 @@ import Layout from '../layouts/Layout.astro';
     const fileName = fullUrl.substring(lastSlash + 1);
     const potree = version === 'v2' ? potree_v2 : potree_v1;
 
-    status.textContent = `Cargando (Potree ${version})…`;
+    status.style.display = 'none';
+    status.textContent = '';
     try {
       const pco = await potree.loadPointCloud(
         fileName,
@@ -218,10 +219,11 @@ import Layout from '../layouts/Layout.astro';
       pco.material.shape = PointShape.CIRCLE;
       pco.material.pointSizeType = PointSizeType.ADAPTIVE;
 
-      status.textContent = 'Listo';
+      status.style.display = 'none';
     } catch (err) {
       console.error(err);
       status.textContent = `Error: ${(err as Error).message}`;
+      status.style.display = '';
     }
   }
 
