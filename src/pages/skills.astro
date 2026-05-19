@@ -4,19 +4,44 @@ import Layout from '../layouts/Layout.astro';
 const categories = [
 	{
 		title: 'Languajes',
-		items: ['C#', 'JavaScript', 'Go', 'TypeScript', 'Java', 'Kotlin']
+		items: [
+			{ name: 'C#', level: 6 },
+			{ name: 'JavaScript', level: 6 },
+			{ name: 'TypeScript', level: 5 },
+			{ name: 'Go', level: 3 },
+			{ name: 'Java', level: 3 },
+			{ name: 'Kotlin', level: 2 },
+		]
 	},
 	{
 		title: 'DevOps & Containers',
-		items: ['Kubernetes (Advanced)', 'Docker (Advanced)']
+		items: [
+			{ name: 'Docker', level: 6 },
+			{ name: 'Kubernetes', level: 5 },
+		]
 	},
 	{
 		title: 'Cloud',
-		items: ['Microsoft Azure (Permanent work context)']
+		items: [
+			{ name: 'Microsoft Azure', level: 5 },
+		]
+	},
+	{
+		title: 'Backend',
+		items: [
+			{ name: 'Node.js', level: 6 },
+			{ name: '.NET / ASP.NET Core', level: 6 },
+			{ name: 'Entity Framework Core', level: 5 },
+			{ name: '.NET Aspire', level: 3 },
+		]
 	},
 	{
 		title: 'Web & Frameworks',
-		items: ['Node.js', 'React', 'Astro', 'CSS / SCSS']
+		items: [
+			{ name: 'React', level: 5 },
+			{ name: 'CSS / SCSS', level: 4 },
+			{ name: 'Astro', level: 3 },
+		]
 	}
 ];
 ---
@@ -31,7 +56,14 @@ const categories = [
 					<h2 class="category-title">{category.title}</h2>
 					<ul class="skills-list">
 						{category.items.map((skill) => (
-							<li class="skill-item">{skill}</li>
+							<li class="skill-item">
+								<span class="skill-name">{skill.name}</span>
+								<span class="skill-bar" aria-label={`Level ${skill.level} of 6`}>
+									{[1,2,3,4,5,6].map((step) => (
+										<span class={`skill-step ${step <= skill.level ? 'filled' : ''}`}></span>
+									))}
+								</span>
+							</li>
 						))}
 					</ul>
 				</div>
@@ -75,9 +107,34 @@ const categories = [
 	}
 
 	.skill-item {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
 		padding: 1rem 0;
 		border-bottom: 1px solid #334155;
 		font-size: 1.125rem;
 		color: #e2e8f0;
+	}
+
+	.skill-name {
+		flex: 1;
+	}
+
+	.skill-bar {
+		display: flex;
+		gap: 5px;
+	}
+
+	.skill-step {
+		width: 18px;
+		height: 8px;
+		border-radius: 2px;
+		background-color: #1e293b;
+		border: 1px solid #334155;
+	}
+
+	.skill-step.filled {
+		background-color: #38bdf8;
+		border-color: #38bdf8;
 	}
 </style>
