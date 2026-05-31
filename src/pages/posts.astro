@@ -2,8 +2,8 @@
 import Layout from '../layouts/Layout.astro';
 
 const articles = [
-    { title: 'Métricas', href: '/posts/metrics.pdf' },
-    { title: 'Costos', href: '/posts/costos.pdf' },
+    { title: 'Métricas', href: '/posts/metrics/' },
+    { title: 'Costos', href: '/posts/costos/' },
 ];
 ---
 
@@ -14,7 +14,7 @@ const articles = [
             <ul class="articles-list">
                 {articles.map((article) => (
                     <li>
-                        <a href={article.href} class="article-link" target="_blank" rel="noopener">
+                        <a href={article.href} class="article-link">
                             <span class="article-title">{article.title}</span>
                             <span class="article-arrow">→</span>
                         </a>
@@ -27,7 +27,7 @@ const articles = [
 
 <style>
     .page {
-        padding: 4rem 2.5rem;
+        padding: 0.75rem 2.5rem 4rem;
     }
 
     .container {

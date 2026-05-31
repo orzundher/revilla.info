@@ -3,46 +3,76 @@ import Layout from '../layouts/Layout.astro';
 
 const categories = [
 	{
-		title: 'Languajes',
+		title: 'Programming Languages',
 		items: [
-			{ name: 'C#', level: 6 },
-			{ name: 'JavaScript', level: 6 },
-			{ name: 'TypeScript', level: 5 },
-			{ name: 'Go', level: 3 },
-			{ name: 'Java', level: 3 },
+			{ name: 'C#', level: 5 },
+			{ name: 'JavaScript', level: 5 },
+			{ name: 'TypeScript', level: 4 },
+			{ name: 'Go', level: 2 },
+			{ name: 'Java', level: 4 },
 			{ name: 'Kotlin', level: 2 },
 		]
 	},
 	{
-		title: 'DevOps & Containers',
+		title: 'DevOps & Orchestration',
 		items: [
-			{ name: 'Docker', level: 6 },
-			{ name: 'Kubernetes', level: 5 },
+			{ name: 'Docker', level: 5 },
+			{ name: 'Kubernetes', level: 4 },
+			{ name: 'GitLab CI', level: 4 },
+			{ name: 'Azure DevOps', level: 4 },
+			{ name: 'Apache Airflow', level: 2 },
+			{ name: 'Argo Workflows', level: 2 }
 		]
 	},
 	{
-		title: 'Cloud',
+		title: 'Cloud Platforms',
 		items: [
 			{ name: 'Microsoft Azure', level: 5 },
+			{ name: 'AWS', level: 2 },
 		]
 	},
 	{
-		title: 'Backend',
+		title: 'Backend Technologies',
 		items: [
-			{ name: 'Node.js', level: 6 },
-			{ name: '.NET / ASP.NET Core', level: 6 },
-			{ name: 'Entity Framework Core', level: 5 },
+			{ name: 'Node.js', level: 5 },
+			{ name: '.NET / ASP.NET Core', level: 5 },
+			{ name: 'Entity Framework Core', level: 4 },
 			{ name: '.NET Aspire', level: 3 },
 		]
 	},
 	{
-		title: 'Web & Frameworks',
+		title: 'Frontend Technologies',
 		items: [
 			{ name: 'React', level: 5 },
+			{ name: 'Angular', level: 3 },
+			{ name: 'Vite', level: 4 },
 			{ name: 'CSS / SCSS', level: 4 },
 			{ name: 'Astro', level: 3 },
+			{ name: 'Svelte', level: 2 },
+			{ name: 'SolidJS', level: 2 },
+			{ name: 'Gin', level: 3 },
+			{ name: 'PHP', level: 3 },
+			{ name: '.Net Blazor', level: 3 },
+			{ name: 'Zustand', level: 3 },
+			{ name: 'Tailwind CSS', level: 2 },
+			{ name: 'Bootstrap', level: 4 },
 		]
-	}
+	},
+	{
+		title: 'Databases and Data Technologies',
+		items: [
+			{ name: 'SQL Server', level: 4 },
+			{ name: 'PostgreSQL', level: 6 },
+			{ name: 'MongoDB', level: 4 },
+			{ name: 'Redis', level: 2 },
+			{ name: 'Cosmos DB', level: 3 },
+			{ name: 'MySQL', level: 3 },
+			{ name: 'SQLite', level: 4 },
+			{ name: 'Elasticsearch', level: 2 },
+			{ name: 'Neo4j', level: 1 },
+			{ name: 'Amazon Athena', level: 2 }
+		]
+	},
 ];
 ---
 
@@ -74,7 +104,7 @@ const categories = [
 
 <style>
 	.page {
-		padding: 4rem 2.5rem;
+		padding: 0.75rem 2.5rem 4rem;
 	}
 
 	.container {
