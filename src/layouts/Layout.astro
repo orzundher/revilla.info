@@ -5,6 +5,7 @@ interface Props {
 	fullscreen?: boolean;
 }
 const { title = 'Revilla — Portfolio de Desarrollo Web y Cartografía', description = 'Revilla — Portfolio personal de desarrollo web, cartografía, visualización de datos y proyectos creativos con tecnologías modernas.', fullscreen = false } = Astro.props;
+const canonicalURL = new URL(Astro.url.pathname, Astro.site);
 const normalizePath = (path: string) => (path !== '/' && path.endsWith('/') ? path.slice(0, -1) : path);
 const currentPath = normalizePath(Astro.url.pathname);
 const isActive = (href: string) => currentPath === href || currentPath.startsWith(`${href}/`);
@@ -30,8 +31,8 @@ const navLinks = [
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<meta name="generator" content={Astro.generator} />
 		<meta name="description" content={description} />
-		<link rel="canonical" href={Astro.url.href} />
-		<meta property="og:url" content={Astro.url.href} />
+		<link rel="canonical" href={canonicalURL} />
+		<meta property="og:url" content={canonicalURL} />
 		<meta property="og:title" content={title} />
 		<meta property="og:site_name" content="Revilla" />
 		<meta property="og:locale" content="en_US" />
