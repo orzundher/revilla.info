@@ -3,10 +3,22 @@ import Layout from '../layouts/Layout.astro';
 ---
 
 <Layout title="Revilla" fullscreen={true}>
+	<h1 class="sr-only">Revilla — Portfolio Personal</h1>
 	<div id="osd-viewer"></div>
 </Layout>
 
 <style>
+	.sr-only {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		padding: 0;
+		margin: -1px;
+		overflow: hidden;
+		clip: rect(0, 0, 0, 0);
+		white-space: nowrap;
+		border: 0;
+	}
 	#osd-viewer {
 		position: fixed;
 		inset: 0;
