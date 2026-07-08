@@ -26,11 +26,12 @@ import Layout from '../layouts/Layout.astro';
 </Layout>
 
 <script>
-  import maplibregl from 'maplibre-gl';
+  import { Map, NavigationControl, GeolocateControl, GeoJSONSource } from 'maplibre-gl';
+  import type { FeatureCollection } from 'geojson';
   import 'maplibre-gl/dist/maplibre-gl.css';
 
   // ── Map ──────────────────────────────────────────────────────────────────
-  const map = new maplibregl.Map({
+  const map = new Map({
     container: 'map',
     style: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
     center: [13.396, 52.52],
@@ -40,7 +41,16 @@ import Layout from '../layouts/Layout.astro';
     attributionControl: { compact: true },
   });
 
-  map.addControl(new maplibregl.NavigationControl(), 'bottom-left');
+  map.addControl(new NavigationControl(), 'bottom-left');
+
+  map.addControl(
+    new GeolocateControl({
+      positionOptions: { enableHighAccuracy: true },
+      trackUserLocation: true,
+      showAccuracyCircle: true,
+    }),
+    'bottom-right'
+  );
 
   map.on('load', () => {
     // Collapse attribution by default
@@ -65,7 +75,7 @@ import Layout from '../layouts/Layout.astro';
     const elevStr = elev != null ? ` · ${Math.round(elev)} m` : '';
     coordsEl.textContent = `${lat.toFixed(6)}, ${lng.toFixed(6)}${elevStr}`;
   });
-  map.on('mouseleave', () => { coordsEl.textContent = '—'; });
+  map.on('mouseout', () => { coordsEl.textContent = '—'; });
 
   // ── State ────────────────────────────────────────────────────────────────
   let drawing = false;
@@ -311,7 +321,7 @@ import Layout from '../layouts/Layout.astro';
       ? [...currentRing, currentRing[0]]  // close it visually
       : currentRing;
 
-    const src = map.getSource('preview') as maplibregl.GeoJSONSource;
+    const src = map.getSource('preview') as GeoJSONSource;
     src.setData({
       type: 'FeatureCollection',
       features: [{
@@ -321,7 +331,7 @@ import Layout from '../layouts/Layout.astro';
       }],
     });
 
-    const vsrc = map.getSource('vertices') as maplibregl.GeoJSONSource;
+    const vsrc = map.getSource('vertices') as GeoJSONSource;
     vsrc.setData({
       type: 'FeatureCollection',
       features: currentRing.map(([lng, lat]) => ({
@@ -333,12 +343,12 @@ import Layout from '../layouts/Layout.astro';
   }
 
   function clearPreview() {
-    (map.getSource('preview') as maplibregl.GeoJSONSource)?.setData(emptyCollection());
-    (map.getSource('vertices') as maplibregl.GeoJSONSource)?.setData(emptyCollection());
+    (map.getSource('preview') as GeoJSONSource)?.setData(emptyCollection());
+    (map.getSource('vertices') as GeoJSONSource)?.setData(emptyCollection());
   }
 
   function refreshPolygons() {
-    const src = map.getSource('polygons') as maplibregl.GeoJSONSource;
+    const src = map.getSource('polygons') as GeoJSONSource;
     if (!src) return;
     src.setData({
       type: 'FeatureCollection',
@@ -350,7 +360,7 @@ import Layout from '../layouts/Layout.astro';
     });
   }
 
-  function emptyCollection(): GeoJSON.FeatureCollection {
+  function emptyCollection(): FeatureCollection {
     return { type: 'FeatureCollection', features: [] };
   }
 </script>
