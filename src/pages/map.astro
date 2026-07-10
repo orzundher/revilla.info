@@ -26,7 +26,7 @@ import Layout from '../layouts/Layout.astro';
 </Layout>
 
 <script>
-  import { Map, NavigationControl, GeolocateControl, GeoJSONSource } from 'maplibre-gl';
+  import { Map, NavigationControl, GeoJSONSource, Marker } from 'maplibre-gl';
   import type { FeatureCollection } from 'geojson';
   import 'maplibre-gl/dist/maplibre-gl.css';
 
@@ -43,14 +43,168 @@ import Layout from '../layouts/Layout.astro';
 
   map.addControl(new NavigationControl(), 'bottom-left');
 
-  map.addControl(
-    new GeolocateControl({
-      positionOptions: { enableHighAccuracy: true },
-      trackUserLocation: true,
-      showAccuracyCircle: true,
-    }),
-    'bottom-right'
-  );
+  // Custom locate control — more reliable on iOS Safari than MapLibre's
+  // built-in GeolocateControl because it calls getCurrentPosition directly
+  // inside the click handler, preserving the user-gesture context required
+  // by iOS to show the permission prompt.
+  class LocateControl {
+    private map?: Map;
+    private container?: HTMLElement;
+    private button?: HTMLButtonElement;
+    private marker?: Marker;
+    private watchId?: number;
+    private isTracking = false;
+    private hasFlown = false;
+
+    onAdd(map: Map): HTMLElement {
+      this.map = map;
+      this.container = document.createElement('div');
+      this.container.className = 'maplibregl-ctrl maplibregl-ctrl-group';
+      this.button = document.createElement('button');
+      this.button.type = 'button';
+      this.button.title = 'Mostrar mi ubicación';
+      this.button.className = 'locate-control-button';
+      this.button.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a7 7 0 0 0-7 7c0 4.42 7 13 7 13s7-8.58 7-13a7 7 0 0 0-7-7Z"/><circle cx="12" cy="9" r="2.5"/></svg>`;
+      this.button.addEventListener('click', () => this.toggle());
+      this.container.appendChild(this.button);
+      return this.container;
+    }
+
+    onRemove(): void {
+      this.container?.parentNode?.removeChild(this.container);
+      this.stop();
+    }
+
+    toggle(): void {
+      if (this.isTracking) {
+        this.stop();
+      } else {
+        this.locate();
+      }
+    }
+
+    locate(): void {
+      if (!navigator.geolocation) {
+        alert('Tu navegador no soporta geolocalización.');
+        return;
+      }
+      if (this.isTracking) {
+        this.stop();
+        return;
+      }
+      this.setLoading(true);
+      // Primer intento: alta precisión (GPS). En desktop sin GPS esto suele
+      // agotar el tiempo, así que reintentamos con baja precisión (red/WiFi).
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          this.setLoading(false);
+          this.onSuccess(pos, true);
+          // Intentamos seguimiento continuo solo si hay un servicio real de
+          // geolocalización. Si el watch no responde, nos quedamos con la
+          // posición obtenida sin mostrar error.
+          this.startWatching(true);
+        },
+        () => {
+          navigator.geolocation.getCurrentPosition(
+            (pos) => {
+              this.setLoading(false);
+              this.onSuccess(pos, true);
+              this.startWatching(false);
+            },
+            (err) => {
+              this.setLoading(false);
+              this.onError(err);
+            },
+            { enableHighAccuracy: false, timeout: 10000, maximumAge: 60000 }
+          );
+        },
+        { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+      );
+    }
+
+    startWatching(highAccuracy: boolean): void {
+      if (!navigator.geolocation || this.watchId != null) return;
+      this.isTracking = true;
+      this.button?.classList.add('active');
+
+      let hasUpdated = false;
+      const fallbackTimer = window.setTimeout(() => {
+        if (!hasUpdated) {
+          // El servicio no responde a seguimiento continuo. Nos quedamos con
+          // la última posición conocida sin lanzar un error al usuario.
+          if (this.watchId != null) {
+            navigator.geolocation.clearWatch(this.watchId);
+            this.watchId = undefined;
+          }
+        }
+      }, highAccuracy ? 8000 : 15000);
+
+      this.watchId = navigator.geolocation.watchPosition(
+        (pos) => {
+          hasUpdated = true;
+          window.clearTimeout(fallbackTimer);
+          this.onSuccess(pos, false);
+        },
+        (err) => {
+          window.clearTimeout(fallbackTimer);
+          // Solo mostramos error si el watch falló antes de tener siquiera
+          // una posición válida.
+          if (!this.hasFlown) this.onError(err);
+        },
+        { enableHighAccuracy: highAccuracy, timeout: highAccuracy ? 10000 : 20000, maximumAge: highAccuracy ? 0 : 60000 }
+      );
+    }
+
+    stop(): void {
+      if (this.watchId != null) {
+        navigator.geolocation.clearWatch(this.watchId);
+        this.watchId = undefined;
+      }
+      this.isTracking = false;
+      this.button?.classList.remove('active');
+    }
+
+    onSuccess(position: GeolocationPosition, shouldFly: boolean): void {
+      const { longitude, latitude } = position.coords;
+      if (!this.map) return;
+
+      if (!this.marker) {
+        const el = document.createElement('div');
+        el.className = 'user-location-marker';
+        this.marker = new Marker({ element: el }).setLngLat([longitude, latitude]).addTo(this.map);
+      } else {
+        this.marker.setLngLat([longitude, latitude]);
+      }
+
+      if (shouldFly || !this.hasFlown) {
+        this.map.flyTo({ center: [longitude, latitude], zoom: 16 });
+        this.hasFlown = true;
+      }
+    }
+
+    onError(error: GeolocationPositionError): void {
+      this.stop();
+      let msg = 'No se pudo obtener tu ubicación.';
+      switch (error.code) {
+        case error.PERMISSION_DENIED:
+          msg = 'Permiso de ubicación denegado. En iPhone, ve a Ajustes > Privacidad y seguridad > Servicios de ubicación > Sitios web y permite el acceso para este sitio.';
+          break;
+        case error.POSITION_UNAVAILABLE:
+          msg = 'No se pudo determinar tu ubicación. Comprueba que el GPS esté activado.';
+          break;
+        case error.TIMEOUT:
+          msg = 'No se pudo obtener una ubicación. En escritorio sin GPS solo está disponible la ubicación aproximada por red/WiFi.';
+          break;
+      }
+      alert(msg);
+    }
+
+    setLoading(loading: boolean): void {
+      this.button?.classList.toggle('loading', loading);
+    }
+  }
+
+  map.addControl(new LocateControl(), 'bottom-right');
 
   map.on('load', () => {
     // Collapse attribution by default
@@ -464,5 +618,25 @@ import Layout from '../layouts/Layout.astro';
     display: block;
   }
 
+  :global(.locate-control-button) {
+    color: #333;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  :global(.locate-control-button.active) {
+    color: #2563eb;
+  }
+  :global(.locate-control-button.loading) {
+    opacity: 0.5;
+  }
+  :global(.user-location-marker) {
+    width: 16px;
+    height: 16px;
+    background: #2563eb;
+    border: 2px solid #fff;
+    border-radius: 50%;
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.4);
+  }
 
 </style>
